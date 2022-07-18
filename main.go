@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -42,6 +43,24 @@ func ListRecipesHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, recipes)
 }
 
+func SearchRecipesHandler(c *gin.Context) {
+	tag := c.Query("tag")
+	result := make([]Recipe, 0)
+
+	for _, r := range recipes {
+		found := false
+		for _, t := range r.Tags {
+			if strings.EqualFold(t, tag) {
+				found = true
+			}
+		}
+		if found {
+			result = append(result, r)
+		}
+	}
+	c.JSON(http.StatusOK, result)
+}
+
 func UpdateRecipesHandler(c *gin.Context) {
 	id := c.Param("id")
 	var recipe Recipe
@@ -77,6 +96,7 @@ func main() {
 	router := gin.Default()
 
 	router.GET("/recipes", ListRecipesHandler)
+	router.GET("/recipes/search", SearchRecipesHandler)
 	router.POST("/recipes", NewRecipeHandler)
 	router.PUT("recipes/:id", UpdateRecipesHandler)
 
