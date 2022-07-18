@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"time"
@@ -66,6 +67,25 @@ func UpdateRecipesHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, recipe)
 }
 
+func DeleteRecipeHandler(c *gin.Context) {
+	id := c.Param("id")
+
+	index := -1
+	for i, r := range recipes {
+		if r.ID == id {
+			index = i
+		}
+	}
+	if index == -1 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Recipe Not Found"})
+		return
+	}
+	// amazingly dumb array manipulation to keep this all in memory
+	recipes = append(recipes[:index], recipes[index+1:]...)
+
+	c.JSON(http.StatusOK, gin.H{"message": fmt.Sprintf("Recipe %s has been deleted", id)})
+}
+
 // while recipes are held in memory, we'll load them from a JSON file at startup
 func init() {
 	recipes = make([]Recipe, 0)
@@ -79,6 +99,7 @@ func main() {
 	router.GET("/recipes", ListRecipesHandler)
 	router.POST("/recipes", NewRecipeHandler)
 	router.PUT("recipes/:id", UpdateRecipesHandler)
+	router.DELETE("recipes/:id", DeleteRecipeHandler)
 
 	router.Run()
 }
