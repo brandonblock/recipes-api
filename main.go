@@ -23,10 +23,6 @@ type Recipe struct {
 // Store recipes in memory for initial routes
 var recipes []Recipe
 
-func ListRecipesHandler(c *gin.Context) {
-	c.JSON(http.StatusOK, recipes)
-}
-
 func NewRecipeHandler(c *gin.Context) {
 	var recipe Recipe
 
@@ -38,6 +34,34 @@ func NewRecipeHandler(c *gin.Context) {
 	recipe.ID = xid.New().String()
 	recipe.PublishedAt = time.Now()
 	recipes = append(recipes, recipe)
+
+	c.JSON(http.StatusOK, recipe)
+}
+
+func ListRecipesHandler(c *gin.Context) {
+	c.JSON(http.StatusOK, recipes)
+}
+
+func UpdateRecipesHandler(c *gin.Context) {
+	id := c.Param("id")
+	var recipe Recipe
+	if err := c.ShouldBindJSON(&recipe); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	//nasty iteration because we're storing in a huge array
+	index := -1
+	for i, r := range recipes {
+		if r.ID == id {
+			index = i
+		}
+	}
+	if index == -1 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Recipe Not Found"})
+		return
+	}
+	recipes[index] = recipe
 
 	c.JSON(http.StatusOK, recipe)
 }
@@ -54,6 +78,7 @@ func main() {
 
 	router.GET("/recipes", ListRecipesHandler)
 	router.POST("/recipes", NewRecipeHandler)
+	router.PUT("recipes/:id", UpdateRecipesHandler)
 
 	router.Run()
 }
