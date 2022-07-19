@@ -38,7 +38,7 @@
     },
     "/recipes/search": {
       "get": {
-        "description": "Returns list of recipes",
+        "description": "Returns list of recipes, search by tag",
         "produces": [
           "application/json"
         ],
@@ -98,6 +98,17 @@
           }
         ]
       }
+    }
+  },
+  "definitions": {
+    "ObjectID": {
+      "type": "array",
+      "title": "ObjectID is the BSON ObjectID type.",
+      "items": {
+        "type": "integer",
+        "format": "uint8"
+      },
+      "x-go-package": "go.mongodb.org/mongo-driver/bson/primitive"
     }
   }
 }
