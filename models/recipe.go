@@ -6,7 +6,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-//Recipe is the data model for the recipes our API handles
 // swagger:parameters recipes newRecipe
 type Recipe struct {
 	ID           primitive.ObjectID `json:"id" bson:"_id"`
