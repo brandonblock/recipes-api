@@ -31,27 +31,25 @@ import (
 	models "recipes-api/models"
 )
 
-// Store recipes in memory for initial routes
-var ctx context.Context
-var collection *mongo.Collection
+// var collection *mongo.Collection
 var recipesHandler *handlers.RecipesHandler
 
 func init() {
 	// connect to MongoDB
-	ctx = context.Background()
+	ctx := context.Background()
 	client, _ := mongo.Connect(ctx, options.Client().ApplyURI(os.Getenv("MONGO_URI")))
 	if err := client.Ping(context.TODO(), readpref.Primary()); err != nil {
 		log.Fatal(err)
 	}
 	log.Println("Connected to MongoDB")
 
-	collection = client.Database(os.Getenv("MONGO_DATABASE")).Collection("recipes")
+	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection("recipes")
 
 	// Create route handler
 	recipesHandler = handlers.NewRecipesHandler(ctx, collection)
 
 	// uncomment and run the first time to load from .json to mongo
-	// LoadDataToDB()
+	// LoadDataToDB(ctx, collection)
 }
 
 func main() {
@@ -67,7 +65,7 @@ func main() {
 }
 
 // LoadDataToDB is a utility funciont to write sample data from json to the mongo database
-func LoadDataToDB() {
+func LoadDataToDB(ctx context.Context, collection *mongo.Collection) {
 	// load recipes from file to memory
 	recipes := make([]models.Recipe, 0)
 	file, _ := ioutil.ReadFile("recipes.json")
