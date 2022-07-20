@@ -213,5 +213,8 @@ func (handler *RecipesHandler) DeleteRecipeHandler(c *gin.Context) {
 		return
 	}
 
+	log.Println("Remove ListRecipes cache from redis")
+	handler.redisClient.Del("recipes")
+
 	c.JSON(http.StatusOK, gin.H{"message": fmt.Sprintf("Recipe %s has been deleted", id)})
 }
