@@ -18,11 +18,13 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
@@ -42,11 +44,19 @@ func init() {
 		log.Fatal(err)
 	}
 	log.Println("Connected to MongoDB")
-
 	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection("recipes")
 
+	// connect to redis
+	redisClient := redis.NewClient(&redis.Options{
+		Addr:     "localhost:6379",
+		Password: "",
+		DB:       0,
+	})
+	status := redisClient.Ping()
+	fmt.Printf("redis status: %s", status)
+
 	// Create route handler
-	recipesHandler = handlers.NewRecipesHandler(ctx, collection)
+	recipesHandler = handlers.NewRecipesHandler(ctx, collection, redisClient)
 
 	// uncomment and run the first time to load from .json to mongo
 	// LoadDataToDB(ctx, collection)
