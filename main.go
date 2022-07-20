@@ -18,7 +18,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -52,8 +51,9 @@ func init() {
 		Password: "",
 		DB:       0,
 	})
-	status := redisClient.Ping()
-	fmt.Printf("redis status: %s", status)
+	if status := redisClient.Ping(); status == nil {
+		log.Fatal("unable to connect to redis client")
+	}
 
 	// Create route handler
 	recipesHandler = handlers.NewRecipesHandler(ctx, collection, redisClient)
