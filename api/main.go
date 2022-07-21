@@ -23,8 +23,6 @@ import (
 	"log"
 	"os"
 
-	"github.com/gin-contrib/sessions"
-	redisStore "github.com/gin-contrib/sessions/redis"
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis"
 	"go.mongodb.org/mongo-driver/bson"
@@ -32,8 +30,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 
-	handlers "recipes-api/handlers"
-	models "recipes-api/models"
+	"recipes-api/api/handlers"
+	"recipes-api/api/models"
 )
 
 var authHandler *handlers.AuthHandler
@@ -77,14 +75,10 @@ func init() {
 func main() {
 	router := gin.Default()
 
-	store, _ := redisStore.NewStore(10, "tcp", os.Getenv("REDIS_URI"), "", []byte("secret"))
-	router.Use(sessions.Sessions("recipes_api", store))
-
 	// unsecured endpoints
 	router.GET("/recipes", recipesHandler.ListRecipesHandler)
 
 	router.POST("/signin", authHandler.SignInHandler)
-	router.POST("/signout", authHandler.SignOutHandler)
 
 	// secured endpoints
 	authorized := router.Group("/")

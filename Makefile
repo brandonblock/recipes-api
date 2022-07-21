@@ -3,7 +3,7 @@ run:
 	MONGO_DATABASE=demo \
 	REDIS_URI=localhost:6379 \
 	JWT_SECRET=eUbP9shywUygMx7u \
-	go run main.go
+	go run api/main.go
 swagger:
-	swagger generate spec -o ./swagger.json
-	swagger serve -F swagger ./swagger.json
+	swagger generate spec -o ./api/swagger.json
+	swagger serve -F swagger ./api/swagger.json
