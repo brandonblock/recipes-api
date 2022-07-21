@@ -30,8 +30,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 
-	handlers "recipes-api/handlers"
-	models "recipes-api/models"
+	"recipes-api/api/handlers"
+	"recipes-api/api/models"
 )
 
 var authHandler *handlers.AuthHandler

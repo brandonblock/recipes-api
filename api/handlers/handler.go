@@ -8,13 +8,13 @@ import (
 	"net/http"
 	"time"
 
-	"recipes-api/models"
-
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+
+	"recipes-api/api/models"
 )
 
 type RecipesHandler struct {

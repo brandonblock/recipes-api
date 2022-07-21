@@ -5,13 +5,14 @@ import (
 	"crypto/sha256"
 	"net/http"
 	"os"
-	"recipes-api/models"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+
+	"recipes-api/api/models"
 )
 
 type AuthHandler struct {
