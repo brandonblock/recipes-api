@@ -17,12 +17,15 @@ package main
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"io/ioutil"
 	"log"
 	"os"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
@@ -31,41 +34,69 @@ import (
 	models "recipes-api/models"
 )
 
-// var collection *mongo.Collection
+var authHandler *handlers.AuthHandler
 var recipesHandler *handlers.RecipesHandler
 
 func init() {
 	// connect to MongoDB
 	ctx := context.Background()
-	client, _ := mongo.Connect(ctx, options.Client().ApplyURI(os.Getenv("MONGO_URI")))
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(os.Getenv("MONGO_URI")))
+	if err != nil {
+		log.Fatal(err)
+	}
 	if err := client.Ping(context.TODO(), readpref.Primary()); err != nil {
 		log.Fatal(err)
 	}
 	log.Println("Connected to MongoDB")
+	collectionRecipes := client.Database(os.Getenv("MONGO_DATABASE")).Collection("recipes")
+	collectionUsers := client.Database(os.Getenv("MONGO_DATABASE")).Collection("users")
 
-	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection("recipes")
+	// connect to redis
+	redisClient := redis.NewClient(&redis.Options{
+		Addr:     os.Getenv("REDIS_URI"),
+		Password: "",
+		DB:       0,
+	})
+	if status := redisClient.Ping(); status == nil {
+		log.Fatal("unable to connect to redis client")
+	}
 
 	// Create route handler
-	recipesHandler = handlers.NewRecipesHandler(ctx, collection)
+	recipesHandler = handlers.NewRecipesHandler(ctx, collectionRecipes, redisClient)
 
-	// uncomment and run the first time to load from .json to mongo
-	// LoadDataToDB(ctx, collection)
+	// Create auth handler
+	authHandler = handlers.NewAuthHandler(ctx, collectionUsers)
+
+	// uncomment and run to load test data to db
+	// LoadRecipDataToDB(ctx, collectionRecipes)
+	// LoadUsersDataToDB(ctx, collectionUsers)
 }
 
 func main() {
 	router := gin.Default()
 
+	// unsecured endpoints
 	router.GET("/recipes", recipesHandler.ListRecipesHandler)
-	router.GET("/recipes/search", recipesHandler.SearchRecipesHandler)
-	router.POST("/recipes", recipesHandler.CreateRecipeHandler)
-	router.PUT("recipes/:id", recipesHandler.UpdateRecipesHandler)
-	router.DELETE("recipes/:id", recipesHandler.DeleteRecipeHandler)
+
+	router.POST("/signin", authHandler.SignInHandler)
+
+	// secured endpoints
+	authorized := router.Group("/")
+	authorized.Use(authHandler.AuthMiddleware())
+	{
+		authorized.GET("/recipes/search", recipesHandler.SearchRecipesHandler)
+		authorized.POST("/recipes", recipesHandler.CreateRecipeHandler)
+		authorized.PUT("/recipes/:id", recipesHandler.UpdateRecipesHandler)
+		authorized.DELETE("/recipes/:id", recipesHandler.DeleteRecipeHandler)
+
+		authorized.POST("/refresh", authHandler.RefreshHandler)
+	}
 
 	router.Run()
 }
 
 // LoadDataToDB is a utility funciont to write sample data from json to the mongo database
-func LoadDataToDB(ctx context.Context, collection *mongo.Collection) {
+func LoadRecipeDataToDB(ctx context.Context, collection *mongo.Collection) {
 	// load recipes from file to memory
 	recipes := make([]models.Recipe, 0)
 	file, _ := ioutil.ReadFile("recipes.json")
@@ -81,4 +112,19 @@ func LoadDataToDB(ctx context.Context, collection *mongo.Collection) {
 		log.Fatal(err)
 	}
 	log.Println("inserted recipes: ", len(insertManyResult.InsertedIDs))
+}
+
+func LoadUsersDataToDB(ctx context.Context, collection *mongo.Collection) {
+	users := map[string]string{
+		"admin":  "fCRmh4Q2J7Rseqkz",
+		"bblock": "123password",
+	}
+	h := sha256.New()
+	for uname, pword := range users {
+		hashed := string(h.Sum([]byte(pword)))
+		collection.InsertOne(ctx, bson.M{
+			"username": uname,
+			"password": hashed,
+		})
+	}
 }
