@@ -1,0 +1,10 @@
+.recipes {
+    width: 100%;
+}
+.recipe {
+    width: 50%;
+    float: left;
+}
+.recipe img {
+    height: 320px;
+}
