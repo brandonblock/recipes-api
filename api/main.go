@@ -23,6 +23,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis"
 	"go.mongodb.org/mongo-driver/bson"
@@ -74,6 +75,7 @@ func init() {
 
 func main() {
 	router := gin.Default()
+	router.Use(cors.Default())
 
 	// unsecured endpoints
 	router.GET("/recipes", recipesHandler.ListRecipesHandler)
