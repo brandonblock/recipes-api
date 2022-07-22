@@ -3,10 +3,14 @@ run-api:
 	MONGO_DATABASE=demo \
 	REDIS_URI=localhost:6379 \
 	JWT_SECRET=eUbP9shywUygMx7u \
-	go run api/main.go
+	./api/api
 run-web:
-	INDEX_PATH=web/index.html \
-	go run web/main.go
+	./web-go/web
+build: build-api build-web
+build-api:
+	cd api; go build -o api
+build-web:
+	cd web-go; go build -o web
 swagger:
 	swagger generate spec -o ./api/swagger.json
 	swagger serve -F swagger ./api/swagger.json
